@@ -6,18 +6,37 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 
+import io.restassured.http.ContentType;
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ProductControllerRA {
 
     private Long existingProductId, nonExistingProductId;
     private String productName;
+    private Map<String, Object> postProductInstance;
     @BeforeEach
     public void setup() throws Exception {
         baseURI = "http://localhost:8080";
 
         productName = "Macbook";
+
+        postProductInstance = new HashMap<>();
+        postProductInstance.put("name", "Meu produto");
+        postProductInstance.put("description",  "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Qui ad, adipisci illum ipsam velit et odit eaque reprehenderit ex maxime delectus dolore labore, quisquam quae tempora natus esse aliquam veniam doloremque quam minima culpa alias maiores commodi. Perferendis enim");
+        postProductInstance.put("imgUrl", "https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/1-big.jpg");
+        postProductInstance.put("price", 50.0);
+
+        List<Map<String, Object>> categories = new ArrayList<>();
+        categories.add(new HashMap<String, Object>() {{ put("id", 2); }});
+        categories.add(new HashMap<String, Object>() {{ put("id", 3); }});
+        postProductInstance.put("categories", categories);
     }
 
     @Test
@@ -68,6 +87,26 @@ public class ProductControllerRA {
         .then()
             .statusCode(200)
             .body("content.findAll { it.price > 2000 }.name", hasItems("PC Gamer Weed", "Smart TV", "PC Gamer Min"))
+        ;
+    }
+
+    @Test
+    public void insertShouldReturnProductCreatedWhenAdminLogged() {
+        JSONObject newProduct = new JSONObject(postProductInstance);
+        given()
+            .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer" + adminToken)
+                .body(newProduct)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+            .when()
+                .post("/products")
+            .then()
+                .statusCode(200)
+            .body("name", equalTo("Meu produto"))
+            .body("price", is(50.0F))
+            .body("imgUrl", equalTo("imgUrl\", \"https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/1-big.jpg"))
+            .body("categories.id", hasItems(2, 3))
         ;
     }
 }
