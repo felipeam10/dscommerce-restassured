@@ -128,6 +128,102 @@ public class ProductControllerRA {
                 .body("name", equalTo("Meu produto"))
                 .body("price", is(50.0f))
                 .body("imgUrl", equalTo("https://raw.githubusercontent.com/devsuperior/dscatalog-resources/master/backend/img/1-big.jpg"))
-                .body("categories.id", hasItems(2, 3));
+                .body("categories.id", hasItems(2, 3))
+        ;
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenLoggedAsAdminAndInvalidName() throws JSONException {
+        postProductInstance.put("name", "aa");
+        JSONObject newProduct = new JSONObject(postProductInstance);
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .body(newProduct)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+        .when()
+                .post("/products")
+        .then()
+                .statusCode(422)
+                .body("errors.message[0]", equalTo("Nome precisa ter de 03 a 80 caracteres"))
+        ;
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenLoggedAsAdminAndInvalidDescription() throws JSONException {
+        postProductInstance.put("description", "Lorem");
+        JSONObject newProduct = new JSONObject(postProductInstance);
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .body(newProduct)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+        .when()
+                .post("/products")
+        .then()
+                .statusCode(422)
+                .body("errors.message[0]", equalTo("Descricao precisa ter no minimo 10 caracteres"))
+        ;
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenLoggedAsAdminAndNegativePrice() throws JSONException {
+        postProductInstance.put("price", "-50.0");
+        JSONObject newProduct = new JSONObject(postProductInstance);
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .body(newProduct)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+        .when()
+                .post("/products")
+        .then()
+                .statusCode(422)
+                .body("errors.message[0]", equalTo("O preco deve ser positivo"))
+        ;
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenLoggedAsAdminAndZeroPrice() throws JSONException {
+        postProductInstance.put("price", "0.0");
+        JSONObject newProduct = new JSONObject(postProductInstance);
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .body(newProduct)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+        .when()
+                .post("/products")
+        .then()
+                .statusCode(422)
+                .body("errors.message[0]", equalTo("O preco deve ser positivo"))
+        ;
+    }
+
+    @Test
+    public void insertShouldReturnUnprocessableEntityWhenLoggedAsAdminAndProductHasNoCategory() throws JSONException {
+        postProductInstance.put("categories", null);
+        JSONObject newProduct = new JSONObject(postProductInstance);
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .body(newProduct)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+        .when()
+                .post("/products")
+        .then()
+                .statusCode(422)
+                .body("errors.message[0]", equalTo("Deve ter no mínimo uma categoria"))
+        ;
     }
 }
