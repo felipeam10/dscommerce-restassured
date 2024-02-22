@@ -20,7 +20,7 @@ import java.util.Map;
 
 public class ProductControllerRA {
 
-    private Long existingProductId, nonExistingProductId;
+    private Long existingProductId, nonExistingProductId, dependentProductId;
     private String productName;
     private Map<String, Object> postProductInstance;
     private String clientUsername, clientPassword, adminUsername, adminPassword;
@@ -259,5 +259,68 @@ public class ProductControllerRA {
         .then()
                 .statusCode(401)
         ;
+    }
+
+    @Test
+    public void deleteShouldReturnNoContentWhenIdExistsAndAdminLogged() throws JSONException {
+        existingProductId = 25L;
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+        .when()
+                .delete("/products/{id}", existingProductId)
+        .then()
+                .statusCode(204)
+        ;
+    }
+
+    @Test
+    public void deleteShouldReturnNotFoundWhenIdExistsAndAdminLogged() throws JSONException {
+        existingProductId = 100L;
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+        .when()
+                .delete("/products/{id}", existingProductId)
+        .then()
+                .statusCode(404)
+                .body("error", equalTo("Recurso não encontrado"))
+        ;
+    }
+
+    @Test
+    public void deleteShouldReturnBadRequestWhenDependentIdAndAdminLogged() throws JSONException {
+        dependentProductId = 3L;
+
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+        .when()
+                .delete("/products/{id}", dependentProductId)
+        .then()
+                .statusCode(400);
+    }
+
+    @Test
+    public void deleteShouldReturnForbiddenWhenClientLogged() throws JSONException {
+        existingProductId = 25L;
+
+        given()
+                .header("Authorization", "Bearer " + clientToken)
+        .when()
+                .delete("/products/{id}", existingProductId)
+        .then()
+                .statusCode(403);
+    }
+
+    @Test
+    public void deleteShouldReturnUnauthorizedWhenInvalidToken() throws JSONException {
+        existingProductId = 25L;
+
+        given()
+                .header("Authorization", "Bearer " + invalidToken)
+        .when()
+                .delete("/products/{id}", existingProductId)
+        .then()
+                .statusCode(401);
     }
 }
